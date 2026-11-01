@@ -30,13 +30,20 @@ The scripts that created the tables are kept in `sql/` for transparency (section
 
 ## 2. Setup (VS Code)
 ```powershell
-git clone <repository link>
+git clone https://github.com/luckynnmn/bimbo-demand-forecast-gradient-descent
 cd bimbo-gd-project
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
-Requirements: Python 3.10+ and, for SQL Server, *ODBC Driver 17 or 18 for SQL Server* plus SSMS.
+**If activation is blocked** (error says "running scripts is disabled"), run this command and then try the activation line again. It only changes the current PowerShell window, not your computer permanently:
+ 
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
+ 
+When the environment is active, you see `(.venv)` at the start of the line.
+**Requirements: Python 3.10+ and, for SQL Server, *ODBC Driver 17 or 18 for SQL Server* plus SSMS.**
 
 ## 3. Get the data and create the two SQL tables
 **3.1 Download** [bimbo_bakery_dataset_download](https://drive.google.com/file/d/1y8Tip7TDYmfVFxc7xzsovx4viNdnQht-/view?usp=sharing)
