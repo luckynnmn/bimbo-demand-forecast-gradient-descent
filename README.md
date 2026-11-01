@@ -1,6 +1,8 @@
 # Grupo Bimbo – Weekly Bakery Demand Forecast with Gradient Descent
 
-MSBA 265 · University of the Pacific · Author: **NgocMaiNhi Nguyen** · Repository: **[paste repository link here]**
+MSBA 265 · University of the Pacific 
+· Author: **NgocMaiNhi Nguyen** 
+· Repository: **https://github.com/luckynnmn/bimbo-demand-forecast-gradient-descent**
 
 **Question.** Can the weekly demand of a bakery product at a store be forecast from its own past orders, using a linear regression
 whose weights are learned by **mini-batch Gradient Descent** (own NumPy implementation, `bimbo_gd/gradient_descent.py`)?
