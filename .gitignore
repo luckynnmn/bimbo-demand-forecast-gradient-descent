@@ -1,0 +1,14 @@
+.venv/
+bakery/
+.env
+__pycache__/
+*.pyc
+data/processed/*
+!data/processed/.gitkeep
+data/*.db
+data/*.csv
+outputs/*
+!outputs/.gitkeep
+.ipynb_checkpoints/
+*.parquet
+*.zip

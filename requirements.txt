@@ -1,0 +1,24 @@
+# ---- Core ----
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4        # only used to cross-check results (closed form); Gradient Descent is written from scratch in NumPy
+matplotlib>=3.8
+pyarrow>=15.0            # read/write .parquet files (faster and smaller than CSV)
+python-dotenv>=1.0       # read the .env file
+
+# ---- SQL connectivity ----
+sqlalchemy>=2.0
+pyodbc>=5.0              # SQL Server (default)
+# psycopg2-binary>=2.9   # PostgreSQL  (uncomment if used)
+# pymysql>=1.1           # MySQL       (uncomment if used)
+# SQLite needs no extra driver
+
+# ---- Report / PDF generation (build_report.py) ----
+reportlab>=4.0
+pypdf>=4.0
+pillow>=10.0
+
+# ---- Notebooks ----
+jupyter>=1.0
+ipykernel>=6.29
+python-pptx>=0.6.23
