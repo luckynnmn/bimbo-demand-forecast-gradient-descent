@@ -21,17 +21,18 @@ Scope: 10 best-selling products, **13,721,629 training rows** (weeks 3-9, all ro
 
 ---
 
-## 1. Why you start from two small CSV files (and do not download Kaggle)
+## 1. Why you start from two small data files (and do not download Kaggle)
 The original Kaggle training table has more than 70 million rows (about 3 GB) and the test table about 7 million rows.
 Downloading, loading, cleaning and filtering them takes hours and a lot of disk space, memory and SQL Server setup, and can overload a normal laptop.
 The author already did those steps in SQL Server (cleaning, then selecting the 10 best-selling products into two separate tables) and exported the
-**result** as two CSV files. You only import these two files, so there is **no Kaggle download and no cleaning to repeat**.
+**result** to two Parquet files that are stored in this repository (`data/`, about 76 MB in total). You load them into **your own SQL Server** with one command,
+and from then on the whole pipeline works through SQL exactly as in the author's project. There is **no Kaggle download and no cleaning to repeat**.
 The scripts that created the tables are kept in `sql/` for transparency (section 6).
 
 ## 2. Setup (VS Code)
 ```powershell
 git clone https://github.com/luckynnmn/bimbo-demand-forecast-gradient-descent
-cd bimbo-gd-project
+cd bimbo-demand-forecast-gradient-descent/P1
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -45,39 +46,14 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 When the environment is active, you see `(.venv)` at the start of the line.
 **Requirements: Python 3.10+ and, for SQL Server, *ODBC Driver 17 or 18 for SQL Server* plus SSMS.**
 
-## 3. Get the data and create the two SQL tables
-**3.1 Download** [bimbo_bakery_dataset_download](https://drive.google.com/file/d/1y8Tip7TDYmfVFxc7xzsovx4viNdnQht-/view?usp=sharing)
-(about 60 MB; if Google says it cannot scan the file for viruses, click *Download anyway*) and unzip it to **`C:\data\bimbo\`**.
-It contains `train_filtered.csv` (13,721,629 rows) and `test_filtered.csv` (169,578 rows). Neither file has a header row.
-The data are shared only for this course assignment.
+## 3. Create the SQL tables from the data files
+`data/train_filtered.parquet` (13,721,629 rows) and `data/test_filtered.parquet` (169,578 rows) come with the repository.
 
-**3.2 Import in SSMS.** Create an empty database, then open a *New Query* and run:
+**3.1 Create an empty database.** In SSMS open a *New Query* and run:
 ```sql
 CREATE DATABASE Bimbo;
-GO
-USE Bimbo;
-GO
-CREATE TABLE dbo.train_filtered (
-    Week int, Agency_ID int, Channel_ID int, Route_SAK int, Customer_ID int, Product_ID int,
-    Sales_Units_Today int, Sales_Today float, Returns_Units_Next int, Returns_Next float, Adjusted_Demand_Units int);
-CREATE TABLE dbo.test_filtered (
-    id int, Week int, Agency_ID int, Channel_ID int, Route_SAK int, Customer_ID int, Product_ID int);
-
-BULK INSERT dbo.train_filtered FROM 'C:\data\bimbo\train_filtered.csv'
-    WITH (FIRSTROW = 1, FIELDTERMINATOR = ',', ROWTERMINATOR = '\n', TABLOCK);
-BULK INSERT dbo.test_filtered  FROM 'C:\data\bimbo\test_filtered.csv'
-    WITH (FIRSTROW = 1, FIELDTERMINATOR = ',', ROWTERMINATOR = '\n', TABLOCK);
-
--- Check: must return 13,721,629 and 169,578
-SELECT COUNT(*) AS train_rows FROM dbo.train_filtered;
-SELECT COUNT(*) AS test_rows  FROM dbo.test_filtered;
 ```
-* *Access is denied / operating system error 5*: the SQL Server service cannot read your folder. Keep the files in `C:\data\bimbo\`.
-* If the first line of a file is text (column names), use `FIRSTROW = 2`.
-* Prefer clicking? Right-click the database → *Tasks → Import Flat File*, use the same column names and types as the `CREATE TABLE` above.
-* No SQL Server? Use the demo database in section 5.
-
-**3.3 Connect from VS Code.** Create a file named `.env` in the project folder (copy `.env.example`) and set your server name:
+**3.2 Connect from VS Code.** Create a file named `.env` in the `P1` folder (copy `.env.example`) and set your server name:
 ```
 DB_DIALECT=mssql
 DB_HOST=localhost            # named instance: localhost\INSTANCE_NAME  (or localhost + DB_PORT=1433 if TCP/IP is enabled)
@@ -90,10 +66,33 @@ DB_ODBC_DRIVER=ODBC Driver 17 for SQL Server   # must match: python -c "import p
 FILTERED_TRAIN_TABLE=dbo.train_filtered
 FILTERED_TEST_TABLE=dbo.test_filtered
 ```
+**3.3 Load the two tables.**
+```powershell
+python tools/import_parquet_to_sql.py
+```
+The script creates `dbo.train_filtered` and `dbo.test_filtered`, loads the files in batches, then counts the rows **in SQL** and compares them with the files.
+It must print `OK` for both tables (13,721,629 and 169,578 rows); the training table takes several minutes. If it prints `MISMATCH` or stops, run it again (it recreates the tables).
+
+**3.4 Check the tables in SSMS.** The import script already compares the row counts, but you can also see the tables yourself:
+1. In SSMS, in *Object Explorer* click **Refresh** (the circular-arrow icon), then expand **Databases → Bimbo → Tables**.
+   You must see `dbo.train_filtered` and `dbo.test_filtered`.
+2. Click the **New Query** button (top-left toolbar). Make sure the database box on the toolbar says **Bimbo** (if it says `master`, pick `Bimbo` from the drop-down list).
+3. Paste the commands below and press **Execute** (or **F5**):
+```sql
+SELECT COUNT(*) AS train_rows FROM dbo.train_filtered;
+SELECT COUNT(*) AS test_rows  FROM dbo.test_filtered;
+```
+4. In the **Results** pane you must see **13,721,629** for `train_rows` and **169,578** for `test_rows`. If a table is missing or the numbers are different, go back to step 3.3 and run the import script again.
+5. Optional: look at a few rows with `SELECT TOP 5 * FROM dbo.train_filtered;` (11 columns: `Week`, `Agency_ID`, `Channel_ID`, `Route_SAK`, `Customer_ID`, `Product_ID`, `Sales_Units_Today`, `Sales_Today`, `Returns_Units_Next`, `Returns_Next`, `Adjusted_Demand_Units`).
+
+**3.5 Check the connection from VS Code.**
 ```powershell
 python test_connection.py
 ```
 It must print `Connection OK`, `dbo.train_filtered: 13,721,629 rows` and `dbo.test_filtered: 169,578 rows`.
+
+The data come from the Kaggle competition *Grupo Bimbo Inventory Demand* and are shared only for this course assignment.
+No SQL Server? Use the demo database in section 5.
 
 ## 4. Run order (P1: feasibility check)
 | Step | What | Output |
@@ -120,7 +119,8 @@ bimbo_gd/        Python package: config, db connection, features, gradient_desce
 notebooks/       train_full_filtered.ipynb (EDA, skewness, feature ladder, final equation, validation)
 sql/             01_create_filtered_tables.sql (first filter with a fixed product list)
                  02_select_top10_products.sql (final filter: 10 best-selling products -> dbo.selected_products_v2, train_filtered, test_filtered)
-tools/           make_demo_db.py (synthetic demo database)
+data/            train_filtered.parquet, test_filtered.parquet (the two filtered tables exported from SQL)
+tools/           import_parquet_to_sql.py (loads the data files into SQL), export_parquet.py (how the files were made), make_demo_db.py (synthetic demo)
 report/          P1_Combined_Package.docx / .pdf (P1 report)
 test_connection.py        checks the SQL connection and counts rows
 requirements.txt, .env.demo, .env.example, .gitignore
