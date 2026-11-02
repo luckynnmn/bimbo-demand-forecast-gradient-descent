@@ -25,14 +25,14 @@ Scope: 10 best-selling products, **13,721,629 training rows** (weeks 3-9, all ro
 The original Kaggle training table has more than 70 million rows (about 3 GB) and the test table about 7 million rows.
 Downloading, loading, cleaning and filtering them takes hours and a lot of disk space, memory and SQL Server setup, and can overload a normal laptop.
 The author already did those steps in SQL Server (cleaning, then selecting the 10 best-selling products into two separate tables) and exported the
-**result** to two Parquet files that are stored in this repository (`data/`, about 76 MB in total). You load them into **your own SQL Server** with one command,
+**result** to two Parquet files that are stored in this repository (`data/export/`, about 76 MB in total). You load them into **your own SQL Server** with one command,
 and from then on the whole pipeline works through SQL exactly as in the author's project. There is **no Kaggle download and no cleaning to repeat**.
 The scripts that created the tables are kept in `sql/` for transparency (section 6).
 
 ## 2. Setup (VS Code)
 ```powershell
 git clone https://github.com/luckynnmn/bimbo-demand-forecast-gradient-descent
-cd bimbo-demand-forecast-gradient-descent/P1
+cd bimbo-demand-forecast-gradient-descent
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -47,13 +47,13 @@ When the environment is active, you see `(.venv)` at the start of the line.
 **Requirements: Python 3.10+ and, for SQL Server, *ODBC Driver 17 or 18 for SQL Server* plus SSMS.**
 
 ## 3. Create the SQL tables from the data files
-`data/train_filtered.parquet` (13,721,629 rows) and `data/test_filtered.parquet` (169,578 rows) come with the repository.
+`data/export/train_filtered.parquet` (13,721,629 rows) and `data/export/test_filtered.parquet` (169,578 rows) come with the repository.
 
 **3.1 Create an empty database.** In SSMS open a *New Query* and run:
 ```sql
 CREATE DATABASE Bimbo;
 ```
-**3.2 Connect from VS Code.** Create a file named `.env` in the `P1` folder (copy `.env.example`) and set your server name:
+**3.2 Connect from VS Code.** Create a file named `.env` in the project folder (copy `.env.example`) and set your server name:
 ```
 DB_DIALECT=mssql
 DB_HOST=localhost            # named instance: localhost\INSTANCE_NAME  (or localhost + DB_PORT=1433 if TCP/IP is enabled)
@@ -119,7 +119,7 @@ bimbo_gd/        Python package: config, db connection, features, gradient_desce
 notebooks/       train_full_filtered.ipynb (EDA, skewness, feature ladder, final equation, validation)
 sql/             01_create_filtered_tables.sql (first filter with a fixed product list)
                  02_select_top10_products.sql (final filter: 10 best-selling products -> dbo.selected_products_v2, train_filtered, test_filtered)
-data/            train_filtered.parquet, test_filtered.parquet (the two filtered tables exported from SQL)
+data/export/     train_filtered.parquet, test_filtered.parquet (the two filtered tables exported from SQL)
 tools/           import_parquet_to_sql.py (loads the data files into SQL), export_parquet.py (how the files were made), make_demo_db.py (synthetic demo)
 report/          P1_Combined_Package.docx / .pdf (P1 report)
 test_connection.py        checks the SQL connection and counts rows

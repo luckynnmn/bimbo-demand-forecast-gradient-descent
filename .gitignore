@@ -10,5 +10,4 @@ data/*.csv
 outputs/*
 !outputs/.gitkeep
 .ipynb_checkpoints/
-*.parquet
 *.zip
