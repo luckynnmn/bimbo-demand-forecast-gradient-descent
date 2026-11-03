@@ -37,7 +37,7 @@ def split_name(full):
 
 
 def main():
-    engine = get_engine(fast_executemany=True)
+    engine = get_engine()
     ok = True
     for kind, full, path in JOBS:
         if not path.exists():
