@@ -1,7 +1,7 @@
 # Grupo Bimbo – Weekly Bakery Demand Forecast with Gradient Descent
 
 MSBA 265 · University of the Pacific 
-· Author: **NgocMaiNhi Nguyen** 
+· Author: **NgocMaiNhi Nguyen (Lucky)** 
 · Repository: **https://github.com/luckynnmn/bimbo-demand-forecast-gradient-descent**
 
 **Question.** Can the weekly demand of a bakery product at a store be forecast from its own past orders, using a linear regression
@@ -24,7 +24,7 @@ Scope: 10 best-selling products, **13,721,629 training rows** (weeks 3-9, all ro
 ## 1. Why you start from two small data files (and do not download Kaggle)
 The original Kaggle training table has more than 70 million rows (about 3 GB) and the test table about 7 million rows.
 Downloading, loading, cleaning and filtering them takes hours and a lot of disk space, memory and SQL Server setup, and can overload a normal laptop.
-The author already did those steps in SQL Server (cleaning, then selecting the 10 best-selling products into two separate tables) and exported the
+I already did those steps in SQL Server (cleaning, then selecting the 10 best-selling products into two separate tables) and exported the
 **result** to two Parquet files that are stored in this repository (`data/export/`, about 76 MB in total). You load them into **your own SQL Server** with one command,
 and from then on the whole pipeline works through SQL exactly as in the author's project. There is **no Kaggle download and no cleaning to repeat**.
 The scripts that created the tables are kept in `sql/` for transparency (section 6).
@@ -99,7 +99,7 @@ No SQL Server? Use the demo database in section 5.
 |---|---|---|
 | 1 | Run all cells of `notebooks/train_full_filtered.ipynb` (select the kernel of your virtual environment): EDA → skewness → Gradient Descent → feature ladder → final equation → validation on week 9 | tables and charts in the notebook; files in `outputs/final/` |
 
-The notebook already contains the output of the author's run, so you can read the results without running it.
+The notebook already contains the output of the Lucky's run, so you can read the results without running it.
 Applying the frozen equation to the test weeks 10-11 and the saved-model demonstration belong to the next stage (P2).
 The first run reads the data from SQL week by week (chunks of at most 1,000,000 rows) and caches it as parquet files in `data/processed/final/`;
 the cache is removed automatically if the SQL tables change. Expect several minutes to tens of minutes depending on your computer.
@@ -125,7 +125,7 @@ report/          P1_Combined_Package.docx / .pdf (P1 report)
 test_connection.py        checks the SQL connection and counts rows
 requirements.txt, .env.demo, .env.example, .gitignore
 ```
-`sql/01` and `sql/02` are the author's scripts that created the filtered tables from the full Kaggle tables (`dbo.train`, `dbo.test`); you do **not** need to run them.
+`sql/01` and `sql/02` are the Lucky's scripts that created the filtered tables from the full Kaggle tables (`dbo.train`, `dbo.test`); you do **not** need to run them.
 Files created when you run the notebook (`outputs/`, `data/processed/`) are not stored in the repository.
 
 ## 7. Method (flow of the training notebook)
