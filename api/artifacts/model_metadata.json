@@ -1,0 +1,34 @@
+{
+  "model_id": "bimbo-gd-linear-1fddf012c1b6",
+  "task": "regression: forecast log1p(Adjusted_Demand_Units) of a customer-product pair for the next week",
+  "algorithm": "multiple linear regression trained with mini-batch Gradient Descent (own NumPy implementation)",
+  "features": [
+    "mean3_cust_prod",
+    "te_product",
+    "te_customer",
+    "is_new_cust_prod"
+  ],
+  "history_weeks": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "example": {
+    "request": {
+      "customer_id": 1502792,
+      "product_id": 1242
+    },
+    "predicted_log_demand": 1.9041339680762805,
+    "predicted_units": 5.713590925209477,
+    "features": {
+      "mean3_cust_prod": 2.001295804977417,
+      "te_product": 1.5748430490493774,
+      "te_customer": 2.1907482147216797,
+      "is_new_cust_prod": 0.0
+    }
+  }
+}
