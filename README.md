@@ -226,26 +226,55 @@ If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
 Main results: expected R² on the log scale **0.691** (week 10) and **0.681** (week 11); the forecast is 25.7% below and 14.1% above real demand in total on validation week 9 (stockout and excess-stock risk).
 
 ## 11. Repository contents
+Part 1 files are marked **P1**, Part 2 files **P2**.
+ 
+```text
+bimbo-demand-forecast-gradient-descent/
+│
+├── bimbo_gd/                   Python package (own NumPy Gradient Descent, features, SQL access)
+│
+├── notebooks/
+│   ├── train_full_filtered.ipynb   P1  EDA, features, Gradient Descent, validation
+│   └── test_full_filtered.ipynb    P2  forecast of test weeks 10-11
+│
+├── api/                        P2  forecast API
+│   ├── app.py                      FastAPI service
+│   ├── smoke_check_api.py          health + forecast check (prints PASS)
+│   ├── requirements-api.txt
+│   ├── build_artifacts.py          optional: rebuilds the artifacts
+│   ├── README.md
+│   └── artifacts/                  model.npz, history_compact.npz, model_metadata.json
+│
+├── data/export/                P1  train_filtered.parquet, test_filtered.parquet
+├── sql/                        P1  01_create_filtered_tables.sql, 02_select_top10_products.sql
+│
+├── tools/
+│   ├── import_parquet_to_sql.py    loads the data files into SQL Server
+│   ├── export_parquet.py           how the data files were made
+│   └── make_demo_db.py             synthetic demo database
+│
+├── report/
+│   ├── P1_Combined_Package.docx / .pdf     P1  report
+│   ├── P2_Draft_Paper.docx                 P2  draft paper
+│   ├── Stakeholder_Presentation.pptx       P2  slides
+│   └── figures/                            P2  charts of the paper and the slides
+│
+├── load_and_test_demo.py       P2  loads the saved model and tests it (no database)
+├── summarize_results.py        P2  draws the charts from outputs/final/
+├── test_connection.py          P1  checks the SQL connection
+└── requirements.txt, .env.example, .env.demo, .gitignore
 ```
-bimbo_gd/        Python package: config, db connection, features, gradient_descent (own NumPy GD), metrics, product_scope, batch_pipeline, data_loader
-notebooks/       train_full_filtered.ipynb (P1: EDA, skewness, feature ladder, final equation, validation)
-                 test_full_filtered.ipynb  (P2: forecast of test weeks 10-11, expected R², checks)
-sql/             01_create_filtered_tables.sql (first filter with a fixed product list)
-                 02_select_top10_products.sql (final filter: 10 best-selling products -> dbo.selected_products_v2, train_filtered, test_filtered)
-data/export/     train_filtered.parquet, test_filtered.parquet (the two filtered tables exported from SQL)
-api/             P2: app.py (FastAPI service), smoke_check_api.py, requirements-api.txt, build_artifacts.py,
-                 artifacts/ (model.npz, history_compact.npz, model_metadata.json), README.md
-tools/           import_parquet_to_sql.py (loads the data files into SQL), export_parquet.py (how the files were made),
-                 make_demo_db.py (synthetic demo)
-report/          P1_Combined_Package.docx / .pdf (P1 report); P2_Draft_Paper.docx, Stakeholder_Presentation.pptx, figures/ (P2)
-load_and_test_demo.py     P2: loads the saved model and tests it (no database needed)
-summarize_results.py      P2: draws the charts of the paper and the slides from outputs/final/
-test_connection.py        checks the SQL connection and counts rows
-requirements.txt, .env.demo, .env.example, .gitignore
-```
-`sql/01` and `sql/02` are the Lucky's scripts that created the filtered tables from the full Kaggle tables (`dbo.train`, `dbo.test`); you do **not** need to run them.
-Files created when you run the notebooks (`outputs/`, `data/processed/`) are not stored in the repository; `api/artifacts/` is stored so the API runs right after cloning.
-
+ 
+| Folder or file | What you do with it |
+|---|---|
+| `data/export/`, `tools/import_parquet_to_sql.py` | load the data into your SQL Server (section 3) |
+| `notebooks/` | run in order: train (section 4), then test (section 6) |
+| `load_and_test_demo.py` | section 7 |
+| `api/` | section 8 |
+| `summarize_results.py` | section 9 |
+| `sql/` | for reading only: the scripts that created the filtered tables from the full Kaggle tables; you do **not** need to run them |
+ 
+`outputs/` and `data/processed/` are created when you run the notebooks and are not stored in the repository; `api/artifacts/` is stored so the API runs right after cloning.
 ## 12. Method (flow of the training notebook)
 1. **EDA** of the whole table (quality, volumes, per-product profile, distributions).
 2. **Skewness**: demand is strongly right-skewed (24.1) → `log1p` (0.54); the extreme tail is capped in the training rows only; skewness is checked per feature and features with |r| ≥ 0.85 are merged.
