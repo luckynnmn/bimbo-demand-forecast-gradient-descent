@@ -19,6 +19,10 @@ The target is `log1p(Adjusted_Demand_Units)`; the data come from the Kaggle comp
 
 Scope: 10 best-selling products, **13,721,629 training rows** (weeks 3-9, all rows, no sampling) and 169,578 test rows (weeks 10-11, no target → forecasts only).
 
+**Two parts.** **Part 1 (P1)** is the feasibility check: data in SQL, features, Gradient Descent, validation (sections 1-5).
+**Part 2 (P2)** applies the frozen model: forecast of test weeks 10-11, saved model + load-and-test demo, forecast API, charts for the paper and the slides (sections 6-10).
+Follow the sections **in order**; each step tells you what you must see on the screen before you go on.
+
 ---
 
 ## 1. Why you start from two small data files (and do not download Kaggle)
@@ -27,7 +31,7 @@ Downloading, loading, cleaning and filtering them takes hours and a lot of disk 
 I already did those steps in SQL Server (cleaning, then selecting the 10 best-selling products into two separate tables) and exported the
 **result** to two Parquet files that are stored in this repository (`data/export/`, about 76 MB in total). You load them into **your own SQL Server** with one command,
 and from then on the whole pipeline works through SQL exactly as in the author's project. There is **no Kaggle download and no cleaning to repeat**.
-The scripts that created the tables are kept in `sql/` for transparency (section 6).
+The scripts that created the tables are kept in `sql/` for transparency (section 9).
 
 ## 2. Setup (VS Code)
 ```powershell
@@ -100,7 +104,7 @@ No SQL Server? Use the demo database in section 5.
 | 1 | Run all cells of `notebooks/train_full_filtered.ipynb` (select the kernel of your virtual environment): EDA → skewness → Gradient Descent → feature ladder → final equation → validation on week 9 | tables and charts in the notebook; files in `outputs/final/` |
 
 The notebook already contains the output of the Lucky's run, so you can read the results without running it.
-Applying the frozen equation to the test weeks 10-11 and the saved-model demonstration belong to the next stage (P2).
+Applying the frozen equation to the test weeks 10-11, the saved-model demonstration and the API belong to Part 2 (sections 6-10); they need the files that this notebook saves in `outputs/final/`.
 The first run reads the data from SQL week by week (chunks of at most 1,000,000 rows) and caches it as parquet files in `data/processed/final/`;
 the cache is removed automatically if the SQL tables change. Expect several minutes to tens of minutes depending on your computer.
 Settings (learning rate, epochs, `MIN_GAIN`, `CORR_DROP`, ...) are at the top of the notebook.
@@ -113,29 +117,144 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/train_full_filtere
 ```
 The demo data are synthetic: they only prove that the pipeline runs; the numbers are not real results.
 
-## 6. Repository contents (P1)
+---
+
+# Part 2 (P2): forecast, saved model, API and charts
+
+**Before you start Part 2** you must have finished Part 1: the virtual environment is active (`(.venv)` at the start of the line), SQL Server is running, `python test_connection.py` prints `Connection OK`, and `notebooks/train_full_filtered.ipynb` has been run completely.
+Check it with this command; the folder must contain `model_final.npz`, `history_stats_final.pkl`, `metrics_final.json` and `reference_check.npz`:
+```powershell
+dir outputs\final
+```
+If a file is missing, go back to section 4 and run the training notebook again.
+
+## 6. Forecast the test weeks 10 and 11
+This step applies the frozen equation to **every row** of `dbo.test_filtered` (169,578 rows). The test table has no demand column (the competition hides it), so the forecast itself is the result.
+
+**6.1 Open the notebook.** In VS Code open `notebooks/test_full_filtered.ipynb` and choose the kernel of your virtual environment (top right, `.venv`).
+
+**6.2 Run all cells.** Click **Run All** at the top of the notebook. It takes about one to two minutes.
+
+**6.3 Check what you see**, section by section:
+1. *Section 1 (model)*: a table with the intercept, the hyper-parameters and `R² on validation week 9 = 0.6906`, then the final equation.
+2. *Section 2 (test rows)*: `Weeks in the test table: [10, 11] | total rows: 169,578` and `Products in test but NOT in the training table: none`.
+3. *Section 3 (forecast)*: `169,578 test rows forecast -> outputs\final\test_predictions_rows.csv`.
+4. *Section 4 (per product)*: a table with the expected demand of each product for week 10 and week 11, and the customer × product tables (top 25 customers).
+5. *Section 5 (R²)*: `Expected for TEST WEEK 10: R² = 0.6906, RMSLE = 0.5098` and `Expected for TEST WEEK 11: R² = 0.6808, RMSLE = 0.5177`. These are not real test scores (labels are hidden); they come from forecasting the known week 9 one and two weeks ahead.
+6. *Section 6 (compatibility)*: new customers 0.8% (week 10) and 1.3% (week 11), new products 0.0%, new customer-product pairs 4.7% and 6.3%; then the feature-drift table and one chart per product (actual weeks 3-9 and forecast weeks 10-11).
+
+**6.4 Files created** in `outputs/final/`: `test_predictions_rows.csv` (id + forecast), `test_predictions_by_product_week.csv`, `customer_x_product_predicted_week10.csv`, `customer_x_product_predicted_week11.csv`, `test_summary.json`.
+If the notebook stops with a connection error, go back to `python test_connection.py` (section 3.5).
+
+*Reading the charts:* the forecast for week 10 is usually a little below the real average of week 9. This is mainly the known bias of converting a log-scale forecast back to units (the forecast is on average 4% to 26% below real demand per product), not a real drop in demand.
+
+## 7. Load the saved model and test it (no database)
+This step proves that the saved model can be loaded in a **fresh program**, without SQL and without training, and that it gives the same answers as at training time.
+
+**7.1 Run it** from the project folder (the one that contains `load_and_test_demo.py`):
+```powershell
+python load_and_test_demo.py
+```
+**7.2 Check what you see:**
+1. `Loaded model: 4 features | intercept -0.6570 | history weeks ...`
+2. `Check 1 - same predictions as at training time on 2,000 stored rows: PASS`
+3. `Check 2 - example forecasts ...`: a small table of three example customers; the third customer is unknown to the model, so the product average is used (the program does not fail).
+
+If you see `Check 1 ... FAIL` or `Missing ...`, run the training notebook again (section 4).
+
+## 8. Start the forecast API and test it
+The frozen equation is also served by a small local API (FastAPI). It uses compact lookup files in `api/artifacts/` (13 MB), so it needs **no SQL Server and no training**. You need **two terminals**.
+
+**8.1 Install the packages (only once).** In the first terminal, with `(.venv)` active:
+```powershell
+cd api
+pip install -r requirements-api.txt
+```
+**8.2 Start the server (terminal 1).**
+```powershell
+python -m uvicorn app:app --host 127.0.0.1 --port 8000
+```
+You must see `Application startup complete.` and `Uvicorn running on http://127.0.0.1:8000`. **Leave this terminal open**; it is the running server.
+
+**8.3 Run the smoke check (terminal 2).** In VS Code click the **+** of the terminal panel to open a second terminal, activate the environment again (`.\.venv\Scripts\Activate.ps1` from the project folder), then:
+```powershell
+cd api
+python smoke_check_api.py
+```
+The script (a) calls `GET /health` and checks `{"status": "ready", "model_id": "..."}`, (b) sends the example request stored in `artifacts/model_metadata.json` to `POST /predict`, (c) compares the answer with the reference computed by the full original pipeline when the model was frozen (tolerance 1e-6 on the log scale). The last line must be:
+```
+PASS: health and forecast match the supplied reference.
+```
+**8.4 Try the API yourself (optional).**
+- In a browser open `http://127.0.0.1:8000/health`: you see `{"status":"ready","model_id":"bimbo-gd-linear-1fddf012c1b6"}` (the address `http://127.0.0.1:8000/` alone shows "Not Found"; this is normal).
+- Open `http://127.0.0.1:8000/docs`, click `POST /predict` → **Try it out**, enter `{"customer_id": 1502792, "product_id": 1242}` and click **Execute**. The answer is about **5.7 units**.
+- Or in PowerShell:
+```powershell
+Invoke-RestMethod -Uri http://127.0.0.1:8000/predict -Method Post -ContentType "application/json" -Body '{"customer_id":1502792,"product_id":1242}'
+```
+The answer contains `predicted_units`, `predicted_log_demand`, the four feature values and the flags `known_customer`, `known_product`, `known_pair`. A customer or product that the model has never seen receives the overall average level instead of an error, and the flags say so.
+
+**8.5 Stop the server.** Click the terminal that runs the server and press `Ctrl + C`.
+
+| Problem | What to do |
+|---|---|
+| `No module named uvicorn` | `(.venv)` is not active or step 8.1 was skipped |
+| `Address already in use` | close the old server (`Ctrl + C`) or use `--port 8001` (then change the URL in `smoke_check_api.py`) |
+| The smoke check cannot connect | the server of step 8.2 is not running |
+
+`api/build_artifacts.py` (optional) rebuilds the artifacts from `history_stats_final.pkl`; the 200 MB history file is not stored in the repository.
+
+## 9. Draw the charts of the paper and the slides
+`summarize_results.py` reads the files saved by the two notebooks (it trains and tests nothing, and needs no database) and draws all the charts used in `report/P2_Draft_Paper.docx` and `report/Stakeholder_Presentation.pptx`. Run it from the project folder:
+```powershell
+python summarize_results.py
+```
+You must see one line `saved report\figures\... <- fig_...` for each chart and `Done: figures are in report\figures`:
+`pipeline_compact.png` (icon-and-arrow pipeline), `eda.png`, `batch_r2.png`, `ladder.png`, `coefficients.png`, `product_scatter.png`, `inventory.png` and `forecast_vs_history.png`.
+If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
+
+## 10. Where to find the P2 results
+| What | File |
+|---|---|
+| Draft paper | `report/P2_Draft_Paper.docx` |
+| Stakeholder slides | `report/Stakeholder_Presentation.pptx` |
+| Charts | `report/figures/*.png` |
+| Forecast of the test weeks | `outputs/final/test_predictions_rows.csv` and the other files listed in 6.4 |
+| Saved model and demo | `outputs/final/model_final.npz`, `load_and_test_demo.py` |
+| Forecast API | `api/` |
+
+Main results: expected R² on the log scale **0.691** (week 10) and **0.681** (week 11); the forecast is 25.7% below and 14.1% above real demand in total on validation week 9 (stockout and excess-stock risk).
+
+## 11. Repository contents
 ```
 bimbo_gd/        Python package: config, db connection, features, gradient_descent (own NumPy GD), metrics, product_scope, batch_pipeline, data_loader
-notebooks/       train_full_filtered.ipynb (EDA, skewness, feature ladder, final equation, validation)
+notebooks/       train_full_filtered.ipynb (P1: EDA, skewness, feature ladder, final equation, validation)
+                 test_full_filtered.ipynb  (P2: forecast of test weeks 10-11, expected R², checks)
 sql/             01_create_filtered_tables.sql (first filter with a fixed product list)
                  02_select_top10_products.sql (final filter: 10 best-selling products -> dbo.selected_products_v2, train_filtered, test_filtered)
 data/export/     train_filtered.parquet, test_filtered.parquet (the two filtered tables exported from SQL)
-tools/           import_parquet_to_sql.py (loads the data files into SQL), export_parquet.py (how the files were made), make_demo_db.py (synthetic demo)
-report/          P1_Combined_Package.docx / .pdf (P1 report)
+api/             P2: app.py (FastAPI service), smoke_check_api.py, requirements-api.txt, build_artifacts.py,
+                 artifacts/ (model.npz, history_compact.npz, model_metadata.json), README.md
+tools/           import_parquet_to_sql.py (loads the data files into SQL), export_parquet.py (how the files were made),
+                 make_demo_db.py (synthetic demo)
+report/          P1_Combined_Package.docx / .pdf (P1 report); P2_Draft_Paper.docx, Stakeholder_Presentation.pptx, figures/ (P2)
+load_and_test_demo.py     P2: loads the saved model and tests it (no database needed)
+summarize_results.py      P2: draws the charts of the paper and the slides from outputs/final/
 test_connection.py        checks the SQL connection and counts rows
 requirements.txt, .env.demo, .env.example, .gitignore
 ```
 `sql/01` and `sql/02` are the Lucky's scripts that created the filtered tables from the full Kaggle tables (`dbo.train`, `dbo.test`); you do **not** need to run them.
-Files created when you run the notebook (`outputs/`, `data/processed/`) are not stored in the repository.
+Files created when you run the notebooks (`outputs/`, `data/processed/`) are not stored in the repository; `api/artifacts/` is stored so the API runs right after cloning.
 
-## 7. Method (flow of the training notebook)
+## 12. Method (flow of the training notebook)
 1. **EDA** of the whole table (quality, volumes, per-product profile, distributions).
 2. **Skewness**: demand is strongly right-skewed (24.1) → `log1p` (0.54); the extreme tail is capped in the training rows only; skewness is checked per feature and features with |r| ≥ 0.85 are merged.
 3. **22 candidate features** built only from earlier weeks (no leakage): smoothed averages per product / customer / agency / route / channel / pair, popularity counts, last orders of the pair and their mean, weeks since last order, return rates, price, "never seen" flags.
 4. **Feature ladder**: features enter one at a time; the table shows intercept, new coefficient, R² and MSE (training and validation) at every step.
 5. **Pruning** (like choosing a best-fit model in JMP): features that add almost nothing to R² are dropped → 4 features.
 6. **Gradient Descent** learns the final equation on all rows of weeks 4-8 (expanding window); the exact least-squares solution is a cross-check.
-7. **Validation** on week 9 (1 and 2 weeks ahead) is compared with training R²; then the equation is frozen; applying it to test weeks 10-11 is the next stage (P2).
+7. **Validation** on week 9 (1 and 2 weeks ahead) is compared with training R²; then the equation is frozen.
+8. **P2:** the frozen equation is applied to test weeks 10-11 (`test_full_filtered.ipynb`), saved and reloaded (`load_and_test_demo.py`) and served by the API (`api/`).
 
 The workflow follows the MSBA 265 course materials (Solis, 2026; <https://github.com/shylasolis/machine-learning-pathway>):
 per-feature skewness and multicollinearity audit (Module 1), Normal Equation vs Gradient Descent and standardisation (Module 2, Project 1).
