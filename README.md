@@ -140,7 +140,8 @@ This step applies the frozen equation to **every row** of `dbo.test_filtered` (1
 2. *Section 2 (test rows)*: `Weeks in the test table: [10, 11] | total rows: 169,578` and `Products in test but NOT in the training table: none`.
 3. *Section 3 (forecast)*: `169,578 test rows forecast -> outputs\final\test_predictions_rows.csv`.
 4. *Section 4 (per product)*: a table with the expected demand of each product for week 10 and week 11, and the customer × product tables (top 25 customers).
-5. *Section 5 (R²)*: `Expected for TEST WEEK 10: R² = 0.6906, RMSLE = 0.5098` and `Expected for TEST WEEK 11: R² = 0.6808, RMSLE = 0.5177`. These are not real test scores (labels are hidden); they come from forecasting the known week 9 one and two weeks ahead.
+5. *Section 5 (R²)*: `Expected for TEST WEEK 10: R² = 0.6906, RMSLE = 0.5098` and `Expected for TEST WEEK 11: R² = 0.6808, RMSLE = 0.5177`. These are not real test scores (labels are hidden); they come from forecasting the known week 9 one and two weeks ahead. 
+   **The last digit of RMSLE may differ slightly (about 0.0001) between computers; R² should be the same.**
 6. *Section 6 (compatibility)*: new customers 0.8% (week 10) and 1.3% (week 11), new products 0.0%, new customer-product pairs 4.7% and 6.3%; then the feature-drift table and one chart per product (actual weeks 3-9 and forecast weeks 10-11).
 
 **6.4 Files created** in `outputs/final/`: `test_predictions_rows.csv` (id + forecast), `test_predictions_by_product_week.csv`, `customer_x_product_predicted_week10.csv`, `customer_x_product_predicted_week11.csv`, `test_summary.json`.
@@ -156,7 +157,7 @@ This step proves that the saved model can be loaded in a **fresh program**, with
 python load_and_test_demo.py
 ```
 **7.2 Check what you see:**
-1. `Loaded model: 4 features | intercept -0.6570 | history weeks ...`
+1. `Loaded model: 4 features | intercept -0.66... | history weeks [3, 4, 5, 6, 7, 8, 9]` (the intercept can differ by a few hundredths after you retrain the model on your computer; this is normal)
 2. `Check 1 - same predictions as at training time on 2,000 stored rows: PASS`
 3. `Check 2 - example forecasts ...`: a small table of three example customers; the third customer is unknown to the model, so the product average is used (the program does not fail).
 
