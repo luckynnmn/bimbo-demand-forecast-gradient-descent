@@ -129,6 +129,7 @@ def fig_inventory(R):
     fig, ax = plt.subplots(figsize=(4.6, 3.3))
     ax.bar(["Stockout risk\n(prediction < actual)", "Excess-stock risk\n(prediction > actual)"],
            [inv["under_forecast_pct_of_demand"], inv["over_forecast_pct_of_demand"]], color=[RED, ORANGE])
+    ax.set_ylim(0, max(inv["under_forecast_pct_of_demand"], inv["over_forecast_pct_of_demand"]) * 1.2)
     ax.set_ylabel("% of actual demand"); ax.set_title("Forecast error as inventory impact", fontsize=10)
     for i, v in enumerate([inv["under_forecast_pct_of_demand"], inv["over_forecast_pct_of_demand"]]):
         ax.text(i, v, f"{v:.1f}%", ha="center", va="bottom", fontsize=9)
