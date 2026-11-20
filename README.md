@@ -21,7 +21,7 @@ Scope: 10 best-selling products, **13,721,629 training rows** (weeks 3-9, all ro
 
 **Two parts.** **Part 1 (P1)** is the feasibility check: data in SQL, features, Gradient Descent, validation (sections 1-5).
 **Part 2 (P2)** applies the frozen model: forecast of test weeks 10-11, saved model + load-and-test demo, forecast API, charts for the paper and the slides (sections 6-10).
-Follow the sections **in order**; each step tells you what you must see on the screen before you go on.
+**Final project package** (report, HTML report, PowerPoint): see section 10. Follow the sections **in order**; each step tells you what you must see on the screen before you go on.
 
 ---
 
@@ -140,8 +140,7 @@ This step applies the frozen equation to **every row** of `dbo.test_filtered` (1
 2. *Section 2 (test rows)*: `Weeks in the test table: [10, 11] | total rows: 169,578` and `Products in test but NOT in the training table: none`.
 3. *Section 3 (forecast)*: `169,578 test rows forecast -> outputs\final\test_predictions_rows.csv`.
 4. *Section 4 (per product)*: a table with the expected demand of each product for week 10 and week 11, and the customer × product tables (top 25 customers).
-5. *Section 5 (R²)*: `Expected for TEST WEEK 10: R² = 0.6906, RMSLE = 0.5098` and `Expected for TEST WEEK 11: R² = 0.6808, RMSLE = 0.5177`. These are not real test scores (labels are hidden); they come from forecasting the known week 9 one and two weeks ahead. 
-   **The last digit of RMSLE may differ slightly (about 0.0001) between computers; R² should be the same.**
+5. *Section 5 (R²)*: `Expected for TEST WEEK 10: R² = 0.6906, RMSLE = 0.5098` and `Expected for TEST WEEK 11: R² = 0.6808, RMSLE = 0.5177`. These are not real test scores (labels are hidden); they come from forecasting the known week 9 one and two weeks ahead.
 6. *Section 6 (compatibility)*: new customers 0.8% (week 10) and 1.3% (week 11), new products 0.0%, new customer-product pairs 4.7% and 6.3%; then the feature-drift table and one chart per product (actual weeks 3-9 and forecast weeks 10-11).
 
 **6.4 Files created** in `outputs/final/`: `test_predictions_rows.csv` (id + forecast), `test_predictions_by_product_week.csv`, `customer_x_product_predicted_week10.csv`, `customer_x_product_predicted_week11.csv`, `test_summary.json`.
@@ -157,7 +156,7 @@ This step proves that the saved model can be loaded in a **fresh program**, with
 python load_and_test_demo.py
 ```
 **7.2 Check what you see:**
-1. `Loaded model: 4 features | intercept -0.66... | history weeks [3, 4, 5, 6, 7, 8, 9]` (the intercept can differ by a few hundredths after you retrain the model on your computer; this is normal)
+1. `Loaded model: 4 features | intercept -0.6570 | history weeks ...`
 2. `Check 1 - same predictions as at training time on 2,000 stored rows: PASS`
 3. `Check 2 - example forecasts ...`: a small table of three example customers; the third customer is unknown to the model, so the product average is used (the program does not fail).
 
@@ -214,11 +213,15 @@ You must see one line `saved report\figures\... <- fig_...` for each chart and `
 `pipeline_compact.png` (icon-and-arrow pipeline), `eda.png`, `batch_r2.png`, `ladder.png`, `coefficients.png`, `product_scatter.png`, `inventory.png` and `forecast_vs_history.png`.
 If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
 
-## 10. Where to find the P2 results
+## 10. Where to find the results and the final deliverables
 | What | File |
 |---|---|
-| Draft paper | `report/P2_Draft_Paper.docx` |
-| Stakeholder slides | `report/Stakeholder_Presentation.pptx` |
+| Final paper (PDF, 10-section outline) | `report/Final_Report.pdf` |
+| Rendered report (HTML, open it in a browser) | `report/Final_Report.html` |
+| Stakeholder PowerPoint (with speaker notes) | `report/Stakeholder_Presentation.pptx` |
+| Data source and access notes | `data/README.md` |
+| Saved model, reload test and forecast API (FastAPI extension) | `outputs/final/model_final.npz` + `load_and_test_demo.py` (sections 6-7), `api/` (section 8) |
+| Completed Assignment Validation form | `Assignment_Validation_Form.pdf` |
 | Charts | `report/figures/*.png` |
 | Forecast of the test weeks | `outputs/final/test_predictions_rows.csv` and the other files listed in 6.4 |
 | Saved model and demo | `outputs/final/model_final.npz`, `load_and_test_demo.py` |
@@ -227,8 +230,8 @@ If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
 Main results: expected R² on the log scale **0.691** (week 10) and **0.681** (week 11); the forecast is 25.7% below and 14.1% above real demand in total on validation week 9 (stockout and excess-stock risk).
 
 ## 11. Repository contents
-Part 1 files are marked **P1**, Part 2 files **P2**.
- 
+Part 1 files are marked **P1**, Part 2 files **P2**, final-stage files **Final**.
+
 ```text
 bimbo-demand-forecast-gradient-descent/
 │
@@ -246,7 +249,9 @@ bimbo-demand-forecast-gradient-descent/
 │   ├── README.md
 │   └── artifacts/                  model.npz, history_compact.npz, model_metadata.json
 │
-├── data/export/                P1  train_filtered.parquet, test_filtered.parquet
+├── data/
+│   ├── README.md                   source, access and licence notes
+│   └── export/                     P1  train_filtered.parquet, test_filtered.parquet
 ├── sql/                        P1  01_create_filtered_tables.sql, 02_select_top10_products.sql
 │
 ├── tools/
@@ -257,15 +262,17 @@ bimbo-demand-forecast-gradient-descent/
 ├── report/
 │   ├── P1_Combined_Package.docx / .pdf     P1  report
 │   ├── P2_Draft_Paper.docx                 P2  draft paper
-│   ├── Stakeholder_Presentation.pptx       P2  slides
-│   └── figures/                            P2  charts of the paper and the slides
+│   ├── Final_Report.pdf / .html            Final  paper and rendered report
+│   ├── Stakeholder_Presentation.pptx       P2 / Final  slides with speaker notes
+│   └── figures/                            charts of the paper and the slides
 │
 ├── load_and_test_demo.py       P2  loads the saved model and tests it (no database)
 ├── summarize_results.py        P2  draws the charts from outputs/final/
 ├── test_connection.py          P1  checks the SQL connection
+├── Assignment_Validation_Form.pdf   completed form with the peer's signature
 └── requirements.txt, .env.example, .env.demo, .gitignore
 ```
- 
+
 | Folder or file | What you do with it |
 |---|---|
 | `data/export/`, `tools/import_parquet_to_sql.py` | load the data into your SQL Server (section 3) |
@@ -274,8 +281,9 @@ bimbo-demand-forecast-gradient-descent/
 | `api/` | section 8 |
 | `summarize_results.py` | section 9 |
 | `sql/` | for reading only: the scripts that created the filtered tables from the full Kaggle tables; you do **not** need to run them |
- 
+
 `outputs/` and `data/processed/` are created when you run the notebooks and are not stored in the repository; `api/artifacts/` is stored so the API runs right after cloning.
+
 ## 12. Method (flow of the training notebook)
 1. **EDA** of the whole table (quality, volumes, per-product profile, distributions).
 2. **Skewness**: demand is strongly right-skewed (24.1) → `log1p` (0.54); the extreme tail is capped in the training rows only; skewness is checked per feature and features with |r| ≥ 0.85 are merged.
