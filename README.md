@@ -228,6 +228,23 @@ If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
 | Forecast API | `api/` |
 
 Main results: expected R² on the log scale **0.691** (week 10) and **0.681** (week 11); the forecast is 25.7% below and 14.1% above real demand in total on validation week 9 (stockout and excess-stock risk).
+### 10.1 How to open the HTML report
+
+`report/Final_Report.html` is a single self-contained file (figures are embedded), so it needs no server, no install, and no internet.
+
+1. Open the project folder in File Explorer (or the VS Code Explorer panel).
+2. Go to the `report` folder.
+3. Double-click `Final_Report.html`. It opens in your default browser (Chrome, Edge, or Firefox).
+
+Or open it from the PowerShell terminal in the project root:
+
+```powershell
+start report\Final_Report.html
+```
+
+If you are viewing the repository on GitHub, GitHub shows the HTML as source code. Download the file first (**Download raw file**), or clone the repo, and then open it locally.
+
+The same report is also available as `report/Final_Report.pdf` and `report/Final_Report.docx`.
 
 ## 11. Repository contents
 Part 1 files are marked **P1**, Part 2 files **P2**, final-stage files **Final**.
