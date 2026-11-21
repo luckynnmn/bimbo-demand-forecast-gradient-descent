@@ -205,7 +205,7 @@ The answer contains `predicted_units`, `predicted_log_demand`, the four feature 
 `api/build_artifacts.py` (optional) rebuilds the artifacts from `history_stats_final.pkl`; the 200 MB history file is not stored in the repository.
 
 ## 9. Draw the charts of the paper and the slides
-`summarize_results.py` reads the files saved by the two notebooks (it trains and tests nothing, and needs no database) and draws all the charts used in `report/P2_Draft_Paper.docx` and `report/Stakeholder_Presentation.pptx`. Run it from the project folder:
+`summarize_results.py` reads the files saved by the two notebooks (it trains and tests nothing, and needs no database) and draws all the charts used in `report/P2_Final_Report.pdf` and `report/Stakeholder_Presentation.pptx`. Run it from the project folder:
 ```powershell
 python summarize_results.py
 ```
@@ -277,8 +277,7 @@ bimbo-demand-forecast-gradient-descent/
 │   └── make_demo_db.py             synthetic demo database
 │
 ├── report/
-│   ├── P1_Combined_Package.docx / .pdf     P1  report
-│   ├── P2_Draft_Paper.docx                 P2  draft paper
+│   ├── P1_Combined_Package.pdf     P1  report
 │   ├── Final_Report.pdf / .html            Final  paper and rendered report
 │   ├── Stakeholder_Presentation.pptx       P2 / Final  slides with speaker notes
 │   └── figures/                            charts of the paper and the slides
