@@ -244,7 +244,7 @@ start report\Final_Report.html
 
 If you are viewing the repository on GitHub, GitHub shows the HTML as source code. Download the file first (**Download raw file**), or clone the repo, and then open it locally.
 
-The same report is also available as `report/Final_Report.pdf` and `report/Final_Report.docx`.
+The same report is also available as `report/Final_Report.pdf`.
 
 ## 11. Repository contents
 Part 1 files are marked **P1**, Part 2 files **P2**, final-stage files **Final**.
