@@ -221,7 +221,6 @@ If `forecast_vs_history` is skipped, run the test notebook (section 6) first.
 | Stakeholder PowerPoint (with speaker notes) | `report/Stakeholder_Presentation.pptx` |
 | Data source and access notes | `data/README.md` |
 | Saved model, reload test and forecast API (FastAPI extension) | `outputs/final/model_final.npz` + `load_and_test_demo.py` (sections 6-7), `api/` (section 8) |
-| Completed Assignment Validation form | `Assignment_Validation_Form.pdf` |
 | Charts | `report/figures/*.png` |
 | Forecast of the test weeks | `outputs/final/test_predictions_rows.csv` and the other files listed in 6.4 |
 | Saved model and demo | `outputs/final/model_final.npz`, `load_and_test_demo.py` |
@@ -285,7 +284,6 @@ bimbo-demand-forecast-gradient-descent/
 ├── load_and_test_demo.py       P2  loads the saved model and tests it (no database)
 ├── summarize_results.py        P2  draws the charts from outputs/final/
 ├── test_connection.py          P1  checks the SQL connection
-├── Assignment_Validation_Form.pdf   completed form with the peer's signature
 └── requirements.txt, .env.example, .env.demo, .gitignore
 ```
 
